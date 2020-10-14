@@ -39,6 +39,7 @@ export const getAllTechnologies = (): Promise<Technology[]> => Promise.resolve([
 ])
 
 export type Project = {
+    id: string
     title: string
     shortTitle: string,
     description: string
@@ -53,6 +54,7 @@ export type CodeProject = Project & {
 
 export const getAllProjects = (): Promise<Project[]> => Promise.resolve([
     {
+        id: "0",
         title: "Norwegian university of science and technology",
         shortTitle: "NTNU",
         description: "Master degree in computer science, specializing in artificial intelligence",
@@ -62,6 +64,7 @@ export const getAllProjects = (): Promise<Project[]> => Promise.resolve([
         technologies: []
     },
     {
+        id: "1",
         title: "Magnetron: Web game",
         shortTitle: "Magnetron",
         description: "Web game",
@@ -71,6 +74,7 @@ export const getAllProjects = (): Promise<Project[]> => Promise.resolve([
         technologies: []
     },
     {
+        id: "2",
         title: "Norwegian university of science and technology",
         shortTitle: "NTNU",
         description: "Master degree in computer science, specializing in artificial intelligence",
@@ -80,6 +84,7 @@ export const getAllProjects = (): Promise<Project[]> => Promise.resolve([
         technologies: []
     },
     {
+        id: "3",
         title: "Norwegian university of science and technology",
         shortTitle: "NTNU",
         description: "Master degree in computer science, specializing in artificial intelligence",
@@ -89,6 +94,7 @@ export const getAllProjects = (): Promise<Project[]> => Promise.resolve([
         technologies: []
     },
     {
+        id: "4",
         title: "Norwegian university of science and technology",
         shortTitle: "NTNU",
         description: "Master degree in computer science, specializing in artificial intelligence",

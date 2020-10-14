@@ -1,4 +1,4 @@
-import React, {PropsWithChildren} from "react";
+import React from "react";
 import styled from "styled-components";
 import TopSection from "./TopSection";
 import NavBar from "./NavBar";

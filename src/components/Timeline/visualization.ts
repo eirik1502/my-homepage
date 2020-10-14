@@ -1,6 +1,5 @@
 import * as d3 from 'd3'
 import {Timeline as TimelineType} from '../../services/ContentService/types'
-import {Project} from "../../services/ContentService";
 
 type Vec2I = {x: number, y: number}
 
@@ -58,25 +57,43 @@ export class Visualization {
             .selectAll('g')
             .data(timeline)
 
-        branches
+        const enterBranchGroups = branches
             .enter()
             .append("g")
+
+        enterBranchGroups
             .attr("transform", (_, i) =>
-                `translate(${xCenter()},${y(i)})`
+                `translate(${xCenter()},${y(0)})`
             )
             .append("circle")
             .attr("cx", this.iconRadius)
             .attr("cy", this.iconRadius)
             .attr("r", this.iconRadius)
             .style("fill", (_, i) => `url(#icon_img${i})`)
+            .attr("transform", (_, i) =>
+                `translate(${-this.iconRadius},${-this.iconRadius})`
+            )
 
 
-        branches
+        const enterBranchGroupTransition = enterBranchGroups
             .transition()
+            .duration(1000)
+            .attr("transform", (_, i) =>
+                `translate(${xCenter()},${y(i)})`
+            )
+            .transition()
+            .delay((_, i) => i*200)
             .duration(1000)
             .attr("transform", (_, i) =>
                 `translate(${x(i)},${y(i)})`
             )
+
+        enterBranchGroupTransition.end().then(() => {
+                enterBranchGroups
+                    .append('text')
+                    .text("hei")
+            })
+
 
         branches.exit().remove()
     }

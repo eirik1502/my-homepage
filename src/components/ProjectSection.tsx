@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from "react";
 import styled from "styled-components";
-import Timeline from "./Timeline";
 import ProjectBox from "./ProjectBox";
 import {getAllProjects, Project} from "../services/ContentService";
 
@@ -37,7 +36,7 @@ export default () => {
     return (
     <Wrapper>
         <ProjectsWrapper>
-        {projects.map(p => <StyledProjectBox contentBlock={p}/>)}
+        {projects.map(p => <StyledProjectBox key={p.id} contentBlock={p}/>)}
         </ProjectsWrapper>
     </Wrapper>
     )
