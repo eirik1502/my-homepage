@@ -24,11 +24,13 @@ export class Visualization {
     width = () => this.rootNode.clientWidth
     height = () => this.rootNode.clientHeight
 
-    getNodeX = (i: number) => this.centerPosition.x + (i % 2 === 0 ? -100 : 100)
+
 
     update = (timeline: TimelineType) => {
         const nodeCount = timeline.length
-        const nodeYScale = d3.scaleLinear([0, nodeCount], [0, this.height()])
+        const y = d3.scaleLinear([0, nodeCount], [0, this.height()])
+        const x = (i: number) => this.centerPosition.x + (i % 2 === 0 ? -100 : 100)
+        const xCenter = () => this.centerPosition.x
 
         const root = d3.select(this.rootNode)
 
@@ -52,24 +54,31 @@ export class Visualization {
 
         pattern.exit().remove()
 
-        const node = root
+        const branches = root
             .selectAll('g')
             .data(timeline)
 
-        const enterNodes = node.enter()
+        branches
+            .enter()
             .append("g")
-
-        const enterNodeIcon = enterNodes
+            .attr("transform", (_, i) =>
+                `translate(${xCenter()},${y(i)})`
+            )
             .append("circle")
             .attr("cx", this.iconRadius)
             .attr("cy", this.iconRadius)
             .attr("r", this.iconRadius)
-            .attr("transform", (_, i) =>
-                `translate(${this.getNodeX(i)},${nodeYScale(i)})`
-            )
             .style("fill", (_, i) => `url(#icon_img${i})`)
 
-        node.exit().remove()
+
+        branches
+            .transition()
+            .duration(1000)
+            .attr("transform", (_, i) =>
+                `translate(${x(i)},${y(i)})`
+            )
+
+        branches.exit().remove()
     }
 
 }

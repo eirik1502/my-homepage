@@ -29,11 +29,6 @@ export default () => {
 
     return (
         <svg ref={rootNodeRef} style={{width: "100%", height: "600px"}}>
-            <defs id="mdef">
-                <pattern id="image" x="0" y="0" height="40" width="40">
-                    <image x="0" y="0" width="40" height="40" xlinkHref="https://pbs.twimg.com/profile_images/1643456860/NTNU_logo.jpg"/>
-                </pattern>
-            </defs>
         </svg>
     )
 }
