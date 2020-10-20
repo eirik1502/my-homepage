@@ -1,0 +1,18 @@
+
+.branch-title {
+    margin: 0;
+    padding-top: 4px;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+}
+
+.branch-description {
+    margin: 0;
+    color: #636363;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}

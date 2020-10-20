@@ -1,18 +1,15 @@
-import React, {useEffect, useRef, useState} from "react";
-import {getAllProjects} from "../../services/ContentService";
-import {Timeline} from "../../services/ContentService/types";
-import {Visualization} from "./visualization";
+import React, { useEffect, useRef, useState } from 'react'
+import { Timeline } from '../../services/ContentService/types'
+import { Visualization } from './visualization/visualization'
+import { getAllProjects } from '../../services/ContentService/api'
 
+type Props = {
+    timeline: Timeline
+}
 
-export default () => {
-    const [timeline, setTimeline] = useState<Timeline>([])
-    const rootNodeRef = useRef<SVGSVGElement>(null)
+export default ({ timeline }: Props) => {
+    const rootNodeRef = useRef<HTMLDivElement>(null)
     const visRef = useRef<Visualization>(null)
-
-    useEffect(() => {
-        getAllProjects()
-            .then(cbs => setTimeline(cbs))
-    })
 
     useEffect(() => {
         if (visRef.current) {
@@ -28,7 +25,6 @@ export default () => {
     }, [rootNodeRef, visRef])
 
     return (
-        <svg ref={rootNodeRef} style={{width: "100%", height: "600px"}}>
-        </svg>
+        <div ref={rootNodeRef} style={{ width: '100%', height: '600px' }}></div>
     )
 }
