@@ -4,6 +4,7 @@ import { ProjectsViewType } from './index'
 
 const Wrapper = styled.div`
     padding: 0 10%;
+    box-sizing: border-box;
     display: flex;
     justify-content: center;
     //border-top: 1px solid black;
@@ -13,7 +14,6 @@ const OptionButton = styled.button<{ active?: boolean }>`
     box-sizing: border-box;
     outline: none;
     border: none;
-    margin: 0 1px;
     width: 96px;
     height: 64px;
     background-color: ${(props) =>

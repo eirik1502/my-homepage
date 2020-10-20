@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Timeline } from '../../services/ContentService/types'
 import { Visualization } from './visualization/visualization'
-import { getAllProjects } from '../../services/ContentService/api'
+import { BackgroundImg, TimelineRoot, Wrapper } from './elements'
 
 type Props = {
     timeline: Timeline
@@ -10,6 +10,12 @@ type Props = {
 export default ({ timeline }: Props) => {
     const rootNodeRef = useRef<HTMLDivElement>(null)
     const visRef = useRef<Visualization>(null)
+    const [prevBackgroundUrl, setPrevBackgroundUrl] = useState<
+        string | undefined
+    >(undefined)
+    const [showBackgrounImage, setShowBackgroundImage] = useState<boolean>(
+        false
+    )
 
     useEffect(() => {
         if (visRef.current) {
@@ -24,7 +30,31 @@ export default ({ timeline }: Props) => {
         }
     }, [rootNodeRef, visRef])
 
+    useEffect(() => {
+        if (visRef.current) {
+            visRef.current.onBranchMouseover = (p) => {
+                setPrevBackgroundUrl(p.backgroundUrl)
+                setShowBackgroundImage(true)
+            }
+            visRef.current.onBranchMouseout = () => {
+                setShowBackgroundImage(false)
+            }
+        }
+    }, [visRef])
+
+    useEffect(() => {
+        if (visRef.current) {
+            visRef.current.hideAllButIcons(showBackgrounImage)
+        }
+    }, [visRef, showBackgrounImage])
+
     return (
-        <div ref={rootNodeRef} style={{ width: '100%', height: '600px' }}></div>
+        <Wrapper>
+            <BackgroundImg
+                url={prevBackgroundUrl || ''}
+                opacity={showBackgrounImage ? 1 : 0}
+            />
+            <TimelineRoot ref={rootNodeRef} />
+        </Wrapper>
     )
 }

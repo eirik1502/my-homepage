@@ -14,6 +14,7 @@ const Wrapper = styled.div`
 
 const StyledNavBar = styled(NavBar)`
     position: fixed;
+    z-index: 1000;
     height: 64px;
 `
 

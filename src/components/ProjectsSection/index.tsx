@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Wrapper } from './elements'
+import { OptionsBarArea, TimelineArea, Wrapper } from './elements'
 import OptionsBar from './OptionsBar'
 import Timeline from '../Timeline'
 import {
@@ -35,11 +35,15 @@ const ProjectsSection = () => {
 
     return (
         <Wrapper>
-            <Timeline timeline={projects} />
-            <OptionsBar
-                activeViewType={viewType}
-                onViewTypeClick={(type) => setViewType(type)}
-            />
+            <TimelineArea>
+                <Timeline timeline={projects} />
+            </TimelineArea>
+            <OptionsBarArea>
+                <OptionsBar
+                    activeViewType={viewType}
+                    onViewTypeClick={(type) => setViewType(type)}
+                />
+            </OptionsBarArea>
         </Wrapper>
     )
 }

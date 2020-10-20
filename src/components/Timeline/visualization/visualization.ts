@@ -3,9 +3,7 @@ import {
     Project,
     Timeline as TimelineType,
 } from '../../../services/ContentService/types'
-import { Theme } from '../../../theme'
 import './viualization.css'
-import { appendCicleImagePatter } from './svgPattern'
 import appendBranchIcon from './appendBranchIcon'
 import appendBranchContent from './appendBranchContent'
 
@@ -60,7 +58,7 @@ const mapProjects = (
 
     const branchHeight = 48 * 2
     const iconRadius = branchHeight / 2
-    const maxBranchWidth = availableSpace.size.w / 2 - iconRadius
+    const maxBranchWidth = (availableSpace.size.w / 2 - iconRadius) / 2
     const minBranchWidth = maxBranchWidth * 0.7
 
     const branchAnchor = (i: number) => (i % 2 === 0 ? 'right' : 'left')
@@ -106,6 +104,9 @@ export class Visualization {
         right: 20,
     }
 
+    onBranchMouseover: ((project: Project) => void) | null = null
+    onBranchMouseout: ((project: Project) => void) | null = null
+
     constructor(rootNode: Element) {
         this.rootNode = rootNode
 
@@ -118,6 +119,14 @@ export class Visualization {
 
     width = () => this.rootNode.clientWidth
     height = () => this.rootNode.clientHeight
+
+    hideAllButIcons = (hide: boolean) => {
+        this.svgRoot
+            .selectAll('g.branch-content, #mainLine')
+            .transition()
+            .duration(200)
+            .attr('opacity', hide ? 0 : 1)
+    }
 
     update = (timeline: TimelineType) => {
         const sortedProjects = [...timeline].sort((a, b) =>
@@ -187,15 +196,21 @@ export class Visualization {
             () =>
                 `translate(${availableSpace.centerPos.x},${availableSpace.centerPos.y})`
         )
-        enterBranches.each(function () {
-            d3.select(this)
-                .interrupt('branches-fade-out-remove')
-                .selectAll('g.branch-content')
-                .interrupt('branch-content-fade-in')
-                // .interrupt('remove-branch-content')
-                .remove()
-        })
         appendBranchIcon(enterBranches, 'branch-icon')
+            .on(
+                'mouseover',
+                (e, d) =>
+                    this.onBranchMouseover &&
+                    this.onBranchMouseover(
+                        ((d as any) as MappedProject).project
+                    )
+            )
+            .on(
+                'mouseout',
+                (e, d) =>
+                    this.onBranchMouseout &&
+                    this.onBranchMouseout(((d as any) as MappedProject).project)
+            )
     }
 
     public handleUpdateBranches(
@@ -203,15 +218,16 @@ export class Visualization {
     ) {
         updateBranches
             .selectAll('g.branch-content')
-            .transition('remove-branch-content')
-            .duration(200)
-            .attr('opacity', 0)
+            // .transition('remove-branch-content')
+            // .duration(200)
+            // .attr('opacity', 0)
             .remove()
     }
 
     private handleAllBranches(
         allBranches: d3.Selection<any, MappedProject, any, any>,
-        availableSpace: AvailableSpace
+        availableSpace: AvailableSpace,
+        showOnlyIcons?: boolean
     ) {
         const transitionBranchToPositionY = allBranches
             .transition('branch-move-to-position')
@@ -232,13 +248,15 @@ export class Visualization {
             )
 
         transitionBranchToPositionY.end().then(() => {
-            appendBranchContent(allBranches, 'branch-content')
-                .lower()
-                .attr('opacity', 0)
-                .transition('branch-content-fade-in')
-                .delay((_, i) => i * 100 + 100)
-                .duration(200)
-                .attr('opacity', 1)
+            if (!showOnlyIcons) {
+                appendBranchContent(allBranches, 'branch-content')
+                    .lower()
+                    .attr('opacity', 0)
+                    .transition('branch-content-fade-in')
+                    .delay((_, i) => i * 100 + 100)
+                    .duration(200)
+                    .attr('opacity', 1)
+            }
         })
     }
 
