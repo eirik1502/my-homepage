@@ -1,19 +1,105 @@
 import * as d3 from 'd3'
-import { Timeline as TimelineType } from '../../../services/ContentService/types'
+import {
+    Project,
+    Timeline as TimelineType,
+} from '../../../services/ContentService/types'
 import { Theme } from '../../../theme'
 import './viualization.css'
 import { appendCicleImagePatter } from './svgPattern'
+import appendBranchIcon from './appendBranchIcon'
+import appendBranchContent from './appendBranchContent'
 
 type Vec2I = { x: number; y: number }
+type Pos = Vec2I
+type Size = { w: number; h: number }
+type AllSidesValues = {
+    left: number
+    right: number
+    top: number
+    bottom: number
+}
+
+export type AvailableSpace = {
+    size: Size
+    upperLeftPos: Pos
+    centerPos: Pos
+}
+
+export type MappedProject = {
+    project: Project
+    branchSize: Size
+    branchPos: Pos
+    branchAnchor: 'left' | 'right'
+}
+
+const randRange = (min: number, max: number) =>
+    Math.random() * (max - min) + min
+
+const calcAvailableSpace = (
+    displaySize: Size,
+    padding: AllSidesValues
+): AvailableSpace => {
+    const size: Size = {
+        w: displaySize.w - padding.left - padding.right,
+        h: displaySize.h - padding.top - padding.bottom,
+    }
+    const upperLeftPos = { x: padding.left, y: padding.top }
+    const centerPos = {
+        x: size.w / 2 + upperLeftPos.x,
+        y: size.h / 2 + upperLeftPos.y,
+    }
+
+    return { size, upperLeftPos, centerPos }
+}
+
+const mapProjects = (
+    projects: Project[],
+    availableSpace: AvailableSpace
+): MappedProject[] => {
+    const projectsCount = projects.length
+
+    const branchHeight = 48 * 2
+    const iconRadius = branchHeight / 2
+    const maxBranchWidth = availableSpace.size.w / 2 - iconRadius
+    const minBranchWidth = maxBranchWidth * 0.7
+
+    const branchAnchor = (i: number) => (i % 2 === 0 ? 'right' : 'left')
+    const branchSideSign = (i: number) => (branchAnchor(i) === 'left' ? -1 : 1)
+
+    const generateBranchWidth = () => randRange(minBranchWidth, maxBranchWidth) // must only be called once per branch
+
+    // const xPos = (i: number, branchWidth: number) =>
+    //     availableSpace.centerPos.x + branchWidth * branchSideSign(i)
+    const yPos = d3.scaleLinear(
+        [0, projectsCount - 1],
+        [
+            availableSpace.upperLeftPos.y + iconRadius,
+            availableSpace.upperLeftPos.y + availableSpace.size.h - iconRadius,
+        ]
+    )
+
+    return projects.map<MappedProject>((project, i) => {
+        const width = generateBranchWidth()
+        return {
+            project,
+            branchSize: {
+                w: width,
+                h: branchHeight,
+            },
+            branchPos: {
+                x: availableSpace.centerPos.x + width * branchSideSign(i),
+                y: yPos(i) || 0,
+            },
+            branchAnchor: branchAnchor(i),
+        }
+    })
+}
 
 export class Visualization {
     rootNode: Element
     svgRoot: d3.Selection<SVGSVGElement, unknown, null, undefined>
-    centerPosition: Vec2I
-    iconRadius: number
-    branchOffsetX = 300
-    svgDefs: d3.Selection<SVGDefsElement, unknown, null, undefined>
-    padding = {
+
+    padding: AllSidesValues = {
         top: 50,
         bottom: 50,
         left: 20,
@@ -22,192 +108,149 @@ export class Visualization {
 
     constructor(rootNode: Element) {
         this.rootNode = rootNode
-        this.centerPosition = {
-            x: this.width() / 2,
-            y: this.height() / 2,
-        }
-        this.iconRadius = 48
 
         this.svgRoot = d3
             .select(this.rootNode)
             .append('svg')
             .attr('width', this.width())
             .attr('height', this.height())
-        this.svgDefs = this.svgRoot.append('svg:defs')
     }
 
     width = () => this.rootNode.clientWidth
     height = () => this.rootNode.clientHeight
 
     update = (timeline: TimelineType) => {
-        const nodeCount = timeline.length
         const sortedProjects = [...timeline].sort((a, b) =>
             a.timestamp < b.timestamp ? -1 : 1
         )
 
-        const y = d3.scaleLinear(
-            [0, nodeCount - 1],
-            [
-                this.padding.top + this.iconRadius,
-                this.height() - this.padding.bottom - this.iconRadius,
-            ]
+        const availableSpace: AvailableSpace = calcAvailableSpace(
+            { w: this.width(), h: this.height() },
+            this.padding
         )
-        const extraOffsetByIndex: number[] = []
-        const xOffset = (i: number) => {
-            const base = i % 2 === 0 ? -this.branchOffsetX : this.branchOffsetX
-            if (!extraOffsetByIndex[i]) {
-                extraOffsetByIndex[i] = (Math.random() * 2 - 1) * 40
-            }
-            return base + extraOffsetByIndex[i]
-        }
 
-        const xCenter = () => this.centerPosition.x
-        const x = (i: number) => this.centerPosition.x + xOffset(i)
-        const branchSide = (i: number) => (xOffset(i) <= 0 ? 'left' : 'right')
-
-        const relBranchLine = (i: number) =>
-            d3.line()([
-                [0, 0],
-                [-xOffset(i), 0],
-            ])
+        const mappedProjects = mapProjects(sortedProjects, availableSpace)
 
         const root = this.svgRoot
 
         root.select('#mainLine').remove()
         root.append('line')
             .attr('id', 'mainLine')
-            .attr('x1', xCenter)
-            .attr('y1', 10)
-            .attr('x2', xCenter)
-            .attr('y2', this.height() - 10)
+            .attr('x1', availableSpace.centerPos.x)
+            .attr('y1', 0)
+            .attr('x2', availableSpace.centerPos.x)
+            .attr('y2', this.height())
             .attr('stroke', 'black')
             .attr('stroke-width', 2)
             .lower()
 
-        const pattern = this.svgDefs.selectAll('pattern').data(sortedProjects)
-
-        const iconRadius = this.iconRadius
-        pattern.enter().each(function (p) {
-            appendCicleImagePatter(
-                d3.select(this),
-                iconRadius,
-                p.iconUrl,
-                'icon_img' + p.id
-            )
-        })
-        pattern.exit().remove()
+        // const pattern = this.svgDefs.selectAll('pattern').data(sortedProjects)
+        //
+        // const iconRadius = this.iconRadius
+        // pattern.enter().each(function (p) {
+        //     appendCicleImagePatter(
+        //         d3.select(this),
+        //         iconRadius,
+        //         p.iconUrl,
+        //         'icon_img' + p.id
+        //     )
+        // })
+        // pattern.exit().remove()
 
         const updateBranches = root
             .selectAll('g.branches')
             // @ts-ignore
-            .data(sortedProjects, (p) => p.id)
+            .data(mappedProjects, (p) => p.project.id)
 
         const enterBranches = updateBranches
             .enter()
             .append('g')
             .attr('class', 'branches')
-            .attr('transform', (_, i) => `translate(${xCenter()},${y(0)})`)
-
-        enterBranches
-            .append('circle')
-            .attr('class', 'branch-icon')
-            .attr('cx', this.iconRadius)
-            .attr('cy', this.iconRadius)
-            .attr('r', this.iconRadius)
-            .attr('fill', (p) => `url(#icon_img${p.id})`)
-            .style('cursor', 'pointer')
-            .attr(
-                'transform',
-                (_, i) => `translate(${-this.iconRadius},${-this.iconRadius})`
-            )
 
         // @ts-ignore
         const allBranches = enterBranches.merge(updateBranches)
-        allBranches
-            .selectAll('g.branch-content')
-            .transition()
-            .duration(500)
-            .attr('opacity', 0)
-            .remove()
-
-        allBranches
-            .transition()
-            .duration(1000)
-            .attr('transform', (_, i) => `translate(${xCenter()},${y(i)})`)
-            .transition()
-            .delay((_, i) => i * 100)
-            .duration(500)
-            .attr('transform', (_, i) => `translate(${x(i)},${y(i)})`)
-
-        const branchContentGroup = allBranches
-            .append('g')
-            .attr('class', 'branch-content')
-            .lower()
-        branchContentGroup
-            .append('path')
-            .attr('d', (_, i) => relBranchLine(i))
-            .attr('stroke', '#606060')
-
-        branchContentGroup
-            .append('text')
-            .text((p) => p.timestamp)
-            .attr('fill', '#606060')
-            .attr('text-anchor', (_, i) =>
-                branchSide(i) === 'right' ? 'end' : 'start'
-            )
-            .attr('x', (_, i) => -xOffset(i) - Math.sign(xOffset(i)) * 4)
-
-        const branchText = branchContentGroup
-            .append('foreignObject')
-            .attr('width', (_, i) => Math.abs(xOffset(i)) - this.iconRadius)
-            .attr('height', this.iconRadius * 2)
-            .attr('x', (_, i) =>
-                xOffset(i) > 0 ? -xOffset(i) : this.iconRadius
-            )
-            .attr('y', -this.iconRadius)
-            .style('padding', '4px')
-
-        branchText
-            .append('xhtml:h3')
-            .attr('class', 'branch-title')
-            .style('font-family', Theme.font.main)
-            .style('font-size', '16px')
-            .text((p) => p.shortTitle)
-            .style('text-align', (_, i) => branchSide(i))
-        branchText
-            .append('xhtml:p')
-            .attr('class', 'branch-description')
-            .style('padding-top', '.5em')
-            .style('font-family', Theme.font.main)
-            .style('font-size', '12px')
-            .style('text-align', (_, i) => branchSide(i))
-            .text((p) => p.shortDescription)
-        branchContentGroup
-            .attr('opacity', 0)
-            .transition('fade-in')
-            .delay((_, i) => 1000 + 200 + i * 100)
-            .duration(300)
-            .attr('opacity', 1)
 
         const exitBranches = updateBranches.exit()
-        exitBranches
-            .selectAll('.branch-content')
-            .transition()
-            .duration(200)
-            .attr('opacity', 0)
 
-        exitBranches.transition().duration(200).attr('fill', 'white').remove()
+        this.handleEnterBranches(enterBranches, availableSpace)
+        this.handleUpdateBranches(updateBranches)
+        this.handleAllBranches(allBranches, availableSpace)
+        this.handleExitBranches(exitBranches)
     }
 
     private handleEnterBranches(
-        enterBranches: d3.Selection<any, any, any, any>
-    ) {}
+        enterBranches: d3.Selection<any, MappedProject, any, any>,
+        availableSpace: AvailableSpace
+    ) {
+        enterBranches.attr(
+            'transform',
+            () =>
+                `translate(${availableSpace.centerPos.x},${availableSpace.centerPos.y})`
+        )
+        enterBranches.each(function () {
+            d3.select(this)
+                .interrupt('branches-fade-out-remove')
+                .selectAll('g.branch-content')
+                .interrupt('branch-content-fade-in')
+                // .interrupt('remove-branch-content')
+                .remove()
+        })
+        appendBranchIcon(enterBranches, 'branch-icon')
+    }
+
+    public handleUpdateBranches(
+        updateBranches: d3.Selection<any, MappedProject, any, any>
+    ) {
+        updateBranches
+            .selectAll('g.branch-content')
+            .transition('remove-branch-content')
+            .duration(200)
+            .attr('opacity', 0)
+            .remove()
+    }
 
     private handleAllBranches(
-        updateBranches: d3.Selection<any, any, any, any>
-    ) {}
+        allBranches: d3.Selection<any, MappedProject, any, any>,
+        availableSpace: AvailableSpace
+    ) {
+        const transitionBranchToPositionY = allBranches
+            .transition('branch-move-to-position')
+            .duration(400)
+            .attr(
+                'transform',
+                (d) =>
+                    `translate(${availableSpace.centerPos.x},${d.branchPos.y})`
+            )
 
-    private handleExitBranches(
-        updateBranches: d3.Selection<any, any, any, any>
-    ) {}
+        transitionBranchToPositionY
+            .transition()
+            .delay((_, i) => i * 100)
+            .duration(400)
+            .attr(
+                'transform',
+                (d) => `translate(${d.branchPos.x},${d.branchPos.y})`
+            )
+
+        transitionBranchToPositionY.end().then(() => {
+            appendBranchContent(allBranches, 'branch-content')
+                .lower()
+                .attr('opacity', 0)
+                .transition('branch-content-fade-in')
+                .delay((_, i) => i * 100 + 100)
+                .duration(200)
+                .attr('opacity', 1)
+        })
+    }
+
+    private handleExitBranches(exitBranches: d3.Selection<any, any, any, any>) {
+        exitBranches
+            // .selectAll('.branch-content')
+            // .transition('branches-fade-out-remove')
+            // .duration(200)
+            // .attr('opacity', 0)
+            // .attr('fill-opacity', 0)
+            .remove()
+
+        // exitBranches.transition().duration(200).attr('fill', 'white').remove()
+    }
 }
