@@ -11,7 +11,7 @@ export const mapProjects = (
 ): MappedProject[] => {
     const projectsCount = projects.length
 
-    const branchHeight = 48 * 2
+    const branchHeight = availableSpace.size.h / projectsCount //48 * 2
     const iconRadius = branchHeight / 2
     const maxBranchWidth = availableSpace.size.w / 2 - iconRadius
     const minBranchWidth = maxBranchWidth * 0.7

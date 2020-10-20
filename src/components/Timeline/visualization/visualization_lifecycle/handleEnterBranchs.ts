@@ -1,7 +1,7 @@
 import * as d3 from 'd3'
 import { AvailableSpace, MappedProject } from '../visualizationTypes'
-import appendBranchIcon from '../helpers/appendBranchIcon'
 import { Project } from '../../../../services/ContentService/types'
+import { appendBranchIcon } from '../helpers/branchIcon'
 
 export default function (
     enterBranches: d3.Selection<any, MappedProject, any, any>,

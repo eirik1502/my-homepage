@@ -1,11 +1,14 @@
 import * as d3 from 'd3'
 import { AvailableSpace, MappedProject } from '../visualizationTypes'
 import appendBranchContent from '../helpers/appendBranchContent'
+import { updateBranchIcon } from '../helpers/branchIcon'
 
 export default function (
     allBranches: d3.Selection<any, MappedProject, any, any>,
     availableSpace: AvailableSpace
 ) {
+    updateBranchIcon(allBranches)
+
     const transitionBranchToPositionY = allBranches
         .transition('branch-move-to-position')
         .duration(400)
@@ -16,7 +19,7 @@ export default function (
 
     transitionBranchToPositionY
         .transition()
-        .delay((_, i) => i * 100)
+        .delay((_, i) => i * 50)
         .duration(400)
         .attr(
             'transform',
@@ -28,7 +31,7 @@ export default function (
             .lower()
             .attr('opacity', 0)
             .transition('branch-content-fade-in')
-            .delay((_, i) => i * 100 + 100)
+            .delay((_, i) => i * 50 + 200)
             .duration(200)
             .attr('opacity', 1)
     })

@@ -1,13 +1,16 @@
 import * as d3 from 'd3'
-import appendCicleImagePatter from './appendCicleImagePatter'
+import {
+    appendCircleImagePattern,
+    updateCircleImagePattern,
+} from './cirleImagePattern'
 import { MappedProject } from '../visualizationTypes'
 
-export default (
+export function appendBranchIcon(
     branchGroup: d3.Selection<any, MappedProject, any, any>,
     className: string
-): d3.Selection<SVGCircleElement, MappedProject, any, any> => {
+): d3.Selection<SVGCircleElement, MappedProject, any, any> {
     branchGroup.append('defs').each(function (p) {
-        appendCicleImagePatter(
+        appendCircleImagePattern(
             d3.select(this),
             p.branchSize.h / 2,
             p.project.iconUrl,
@@ -17,16 +20,27 @@ export default (
 
     const iconSelection = branchGroup
         .append('circle')
-        .attr('class', className)
+        .classed(className, true)
+        .attr('fill', (d) => `url(#icon_img${d.project.id})`)
+        .style('cursor', 'pointer')
+
+    return iconSelection
+}
+
+export function updateBranchIcon(
+    branchGroup: d3.Selection<any, MappedProject, any, any>
+) {
+    branchGroup.select('defs').each(function (p) {
+        updateCircleImagePattern(d3.select(this), p.branchSize.h / 2)
+    })
+
+    branchGroup
+        .select('circle')
         .attr('cx', (d) => d.branchSize.h / 2)
         .attr('cy', (d) => d.branchSize.h / 2)
         .attr('r', (d) => d.branchSize.h / 2)
-        .attr('fill', (d) => `url(#icon_img${d.project.id})`)
         .attr(
             'transform',
             (d) => `translate(${-d.branchSize.h / 2}, ${-d.branchSize.h / 2})`
         )
-    // .style('cursor', 'pointer')
-
-    return iconSelection
 }
