@@ -1,6 +1,6 @@
 import * as d3 from 'd3'
 
-export const appendCicleImagePatter = (
+export default (
     selection: d3.Selection<any, any, any, any>,
     radius: number,
     imgUrl: string,

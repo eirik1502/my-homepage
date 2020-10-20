@@ -1,6 +1,6 @@
 import * as d3 from 'd3'
-import { MappedProject } from './visualization'
-import { appendCicleImagePatter } from './svgPattern'
+import appendCicleImagePatter from './appendCicleImagePatter'
+import { MappedProject } from '../visualizationTypes'
 
 export default (
     branchGroup: d3.Selection<any, MappedProject, any, any>,

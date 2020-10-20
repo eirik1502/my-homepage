@@ -1,6 +1,6 @@
 import * as d3 from 'd3'
-import { MappedProject } from './visualization'
-import { Theme } from '../../../theme'
+import { Theme } from '../../../../theme'
+import { MappedProject } from '../visualizationTypes'
 
 export default (
     branchGroup: d3.Selection<SVGGElement, MappedProject, any, any>,

@@ -4,108 +4,20 @@ import {
     Timeline as TimelineType,
 } from '../../../services/ContentService/types'
 import './viualization.css'
-import appendBranchIcon from './appendBranchIcon'
-import appendBranchContent from './appendBranchContent'
-
-type Vec2I = { x: number; y: number }
-type Pos = Vec2I
-type Size = { w: number; h: number }
-type AllSidesValues = {
-    left: number
-    right: number
-    top: number
-    bottom: number
-}
-
-export type AvailableSpace = {
-    size: Size
-    upperLeftPos: Pos
-    centerPos: Pos
-}
-
-export type MappedProject = {
-    project: Project
-    branchSize: Size
-    branchPos: Pos
-    branchAnchor: 'left' | 'right'
-}
-
-const randRange = (min: number, max: number) =>
-    Math.random() * (max - min) + min
-
-const calcAvailableSpace = (
-    displaySize: Size,
-    padding: AllSidesValues
-): AvailableSpace => {
-    const size: Size = {
-        w: displaySize.w - padding.left - padding.right,
-        h: displaySize.h - padding.top - padding.bottom,
-    }
-    const upperLeftPos = { x: padding.left, y: padding.top }
-    const centerPos = {
-        x: size.w / 2 + upperLeftPos.x,
-        y: size.h / 2 + upperLeftPos.y,
-    }
-
-    return { size, upperLeftPos, centerPos }
-}
-
-const mapProjects = (
-    projects: Project[],
-    availableSpace: AvailableSpace
-): MappedProject[] => {
-    const projectsCount = projects.length
-
-    const branchHeight = 48 * 2
-    const iconRadius = branchHeight / 2
-    const maxBranchWidth = (availableSpace.size.w / 2 - iconRadius) / 2
-    const minBranchWidth = maxBranchWidth * 0.7
-
-    const branchAnchor = (i: number) => (i % 2 === 0 ? 'right' : 'left')
-    const branchSideSign = (i: number) => (branchAnchor(i) === 'left' ? -1 : 1)
-
-    const generateBranchWidth = () => randRange(minBranchWidth, maxBranchWidth) // must only be called once per branch
-
-    // const xPos = (i: number, branchWidth: number) =>
-    //     availableSpace.centerPos.x + branchWidth * branchSideSign(i)
-    const yPos = d3.scaleLinear(
-        [0, projectsCount - 1],
-        [
-            availableSpace.upperLeftPos.y + iconRadius,
-            availableSpace.upperLeftPos.y + availableSpace.size.h - iconRadius,
-        ]
-    )
-
-    return projects.map<MappedProject>((project, i) => {
-        const width = generateBranchWidth()
-        return {
-            project,
-            branchSize: {
-                w: width,
-                h: branchHeight,
-            },
-            branchPos: {
-                x: availableSpace.centerPos.x + width * branchSideSign(i),
-                y: yPos(i) || 0,
-            },
-            branchAnchor: branchAnchor(i),
-        }
-    })
-}
+import { AllSidesValues, AvailableSpace } from './visualizationTypes'
+import { calcAvailableSpace } from './helpers/spacePartitioning'
+import { mapProjects } from './data_mapping/timelineMapping'
+import handleEnterBranchs from './visualization_lifecycle/handleEnterBranchs'
+import handleExitBranches from './visualization_lifecycle/handleExitBranches'
+import handleAllBranches from './visualization_lifecycle/handleAllBranches'
+import handleUpdateBranches from './visualization_lifecycle/handleUpdateBranches'
 
 export class Visualization {
     rootNode: Element
     svgRoot: d3.Selection<SVGSVGElement, unknown, null, undefined>
 
-    padding: AllSidesValues = {
-        top: 50,
-        bottom: 50,
-        left: 20,
-        right: 20,
-    }
-
-    onBranchMouseover: ((project: Project) => void) | null = null
-    onBranchMouseout: ((project: Project) => void) | null = null
+    onBranchMouseover: ((project: Project) => void) | undefined
+    onBranchMouseout: ((project: Project) => void) | undefined
 
     constructor(rootNode: Element) {
         this.rootNode = rootNode
@@ -120,22 +32,33 @@ export class Visualization {
     width = () => this.rootNode.clientWidth
     height = () => this.rootNode.clientHeight
 
-    hideAllButIcons = (hide: boolean) => {
-        this.svgRoot
-            .selectAll('g.branch-content, #mainLine')
-            .transition()
-            .duration(200)
-            .attr('opacity', hide ? 0 : 1)
-    }
+    private handleResize() {}
 
-    update = (timeline: TimelineType) => {
+    public update(timeline: TimelineType) {
         const sortedProjects = [...timeline].sort((a, b) =>
             a.timestamp < b.timestamp ? -1 : 1
         )
 
+        const elementSize = { w: this.width(), h: this.height() }
+        const preferredWidth = 800
+        const remainingWidth = Math.max(elementSize.w - preferredWidth, 0)
+
+        const minimumPadding: AllSidesValues = {
+            top: 10,
+            bottom: 10,
+            left: 20,
+            right: 20,
+        }
+
+        const padding = {
+            ...minimumPadding,
+            left: remainingWidth / 2,
+            right: remainingWidth / 2,
+        }
+
         const availableSpace: AvailableSpace = calcAvailableSpace(
-            { w: this.width(), h: this.height() },
-            this.padding
+            elementSize,
+            padding
         )
 
         const mappedProjects = mapProjects(sortedProjects, availableSpace)
@@ -153,19 +76,6 @@ export class Visualization {
             .attr('stroke-width', 2)
             .lower()
 
-        // const pattern = this.svgDefs.selectAll('pattern').data(sortedProjects)
-        //
-        // const iconRadius = this.iconRadius
-        // pattern.enter().each(function (p) {
-        //     appendCicleImagePatter(
-        //         d3.select(this),
-        //         iconRadius,
-        //         p.iconUrl,
-        //         'icon_img' + p.id
-        //     )
-        // })
-        // pattern.exit().remove()
-
         const updateBranches = root
             .selectAll('g.branches')
             // @ts-ignore
@@ -174,101 +84,29 @@ export class Visualization {
         const enterBranches = updateBranches
             .enter()
             .append('g')
-            .attr('class', 'branches')
+            .classed('branches', true)
 
         // @ts-ignore
         const allBranches = enterBranches.merge(updateBranches)
 
         const exitBranches = updateBranches.exit()
 
-        this.handleEnterBranches(enterBranches, availableSpace)
-        this.handleUpdateBranches(updateBranches)
-        this.handleAllBranches(allBranches, availableSpace)
-        this.handleExitBranches(exitBranches)
-    }
-
-    private handleEnterBranches(
-        enterBranches: d3.Selection<any, MappedProject, any, any>,
-        availableSpace: AvailableSpace
-    ) {
-        enterBranches.attr(
-            'transform',
-            () =>
-                `translate(${availableSpace.centerPos.x},${availableSpace.centerPos.y})`
+        handleEnterBranchs(
+            enterBranches,
+            availableSpace,
+            this.onBranchMouseover,
+            this.onBranchMouseout
         )
-        appendBranchIcon(enterBranches, 'branch-icon')
-            .on(
-                'mouseover',
-                (e, d) =>
-                    this.onBranchMouseover &&
-                    this.onBranchMouseover(
-                        ((d as any) as MappedProject).project
-                    )
-            )
-            .on(
-                'mouseout',
-                (e, d) =>
-                    this.onBranchMouseout &&
-                    this.onBranchMouseout(((d as any) as MappedProject).project)
-            )
+        handleUpdateBranches(updateBranches)
+        handleAllBranches(allBranches, availableSpace)
+        handleExitBranches(exitBranches)
     }
 
-    public handleUpdateBranches(
-        updateBranches: d3.Selection<any, MappedProject, any, any>
-    ) {
-        updateBranches
-            .selectAll('g.branch-content')
-            // .transition('remove-branch-content')
-            // .duration(200)
-            // .attr('opacity', 0)
-            .remove()
-    }
-
-    private handleAllBranches(
-        allBranches: d3.Selection<any, MappedProject, any, any>,
-        availableSpace: AvailableSpace,
-        showOnlyIcons?: boolean
-    ) {
-        const transitionBranchToPositionY = allBranches
-            .transition('branch-move-to-position')
-            .duration(400)
-            .attr(
-                'transform',
-                (d) =>
-                    `translate(${availableSpace.centerPos.x},${d.branchPos.y})`
-            )
-
-        transitionBranchToPositionY
+    public hideAllButIcons(hide: boolean) {
+        this.svgRoot
+            .selectAll('g.branch-content, #mainLine')
             .transition()
-            .delay((_, i) => i * 100)
-            .duration(400)
-            .attr(
-                'transform',
-                (d) => `translate(${d.branchPos.x},${d.branchPos.y})`
-            )
-
-        transitionBranchToPositionY.end().then(() => {
-            if (!showOnlyIcons) {
-                appendBranchContent(allBranches, 'branch-content')
-                    .lower()
-                    .attr('opacity', 0)
-                    .transition('branch-content-fade-in')
-                    .delay((_, i) => i * 100 + 100)
-                    .duration(200)
-                    .attr('opacity', 1)
-            }
-        })
-    }
-
-    private handleExitBranches(exitBranches: d3.Selection<any, any, any, any>) {
-        exitBranches
-            // .selectAll('.branch-content')
-            // .transition('branches-fade-out-remove')
-            // .duration(200)
-            // .attr('opacity', 0)
-            // .attr('fill-opacity', 0)
-            .remove()
-
-        // exitBranches.transition().duration(200).attr('fill', 'white').remove()
+            .duration(200)
+            .attr('opacity', hide ? 0 : 1)
     }
 }
