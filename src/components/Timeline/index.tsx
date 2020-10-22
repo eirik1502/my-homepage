@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Timeline } from '../../services/ContentService/types'
+import { Project, Timeline } from '../../services/ContentService/types'
 import { Visualization } from './visualization/visualization'
 import { BackgroundImg, TimelineRoot, Wrapper } from './elements'
 
@@ -13,9 +13,7 @@ export default ({ timeline }: Props) => {
     const [prevBackgroundUrl, setPrevBackgroundUrl] = useState<
         string | undefined
     >(undefined)
-    const [showBackgrounImage, setShowBackgroundImage] = useState<boolean>(
-        false
-    )
+    const [focusProject, setFocusProject] = useState<Project | null>(null)
 
     useEffect(() => {
         if (visRef.current) {
@@ -32,27 +30,27 @@ export default ({ timeline }: Props) => {
 
     useEffect(() => {
         if (visRef.current) {
-            visRef.current.onBranchMouseover = (p) => {
-                setPrevBackgroundUrl(p.backgroundUrl)
-                setShowBackgroundImage(true)
-            }
-            visRef.current.onBranchMouseout = () => {
-                setShowBackgroundImage(false)
-            }
+            visRef.current.onBranchMouseover = setFocusProject
+            visRef.current.onBranchMouseout = () => setFocusProject(null)
         }
     }, [visRef])
 
     useEffect(() => {
         if (visRef.current) {
-            visRef.current.hideAllButIcons(showBackgrounImage)
+            if (focusProject) {
+                setPrevBackgroundUrl(focusProject.backgroundUrl)
+                visRef.current.focusSingleProject(focusProject.id)
+            } else {
+                visRef.current.unfocusAllProjects()
+            }
         }
-    }, [visRef, showBackgrounImage])
+    }, [visRef, focusProject])
 
     return (
         <Wrapper>
             <BackgroundImg
                 url={prevBackgroundUrl || ''}
-                opacity={showBackgrounImage ? 1 : 0}
+                opacity={focusProject ? 1 : 0}
             />
             <TimelineRoot ref={rootNodeRef} />
         </Wrapper>

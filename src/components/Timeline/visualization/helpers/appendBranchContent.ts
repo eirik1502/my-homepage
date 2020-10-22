@@ -9,6 +9,22 @@ export default (
     const branchContentGroup = branchGroup.append('g').attr('class', className)
     const branchOffsetX = (d: MappedProject) =>
         d.branchAnchor === 'left' ? d.branchSize.w : -d.branchSize.w
+
+    branchContentGroup
+        .append('rect')
+        .attr('class', `${className}-background`)
+        .attr('height', (d) => d.branchSize.h)
+        .attr('width', (d) => `calc(${d.branchSize.w}px + 4em)`)
+        .attr('y', (d) => -d.branchSize.h / 2)
+        .attr('rx', '10')
+        .attr('ry', '100%')
+        .style(
+            'transform',
+            (d) => `scaleX(${d.branchAnchor === 'left' ? 1 : -1})`
+        )
+        .attr('fill', '#ffffff')
+        .attr('opacity', 0)
+
     branchContentGroup
         .append('line')
         .attr('x1', 0)

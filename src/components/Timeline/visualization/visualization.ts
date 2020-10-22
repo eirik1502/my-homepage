@@ -1,10 +1,15 @@
 import * as d3 from 'd3'
 import {
     Project,
+    ProjectId,
     Timeline as TimelineType,
 } from '../../../services/ContentService/types'
 import './viualization.css'
-import { AllSidesValues, AvailableSpace } from './visualizationTypes'
+import {
+    AllSidesValues,
+    AvailableSpace,
+    MappedProject,
+} from './visualizationTypes'
 import { calcAvailableSpace } from './helpers/spacePartitioning'
 import { mapProjects } from './data_mapping/timelineMapping'
 import handleEnterBranchs from './visualization_lifecycle/handleEnterBranchs'
@@ -102,11 +107,37 @@ export class Visualization {
         handleExitBranches(exitBranches)
     }
 
-    public hideAllButIcons(hide: boolean) {
-        this.svgRoot
-            .selectAll('g.branch-content, #mainLine')
+    public focusSingleProject(projectId: ProjectId) {
+        const affectSelection = this.svgRoot.selectAll(
+            'g.branch-content, #mainLine'
+        )
+        const fadeOutSelection = affectSelection.filter((d) =>
+            this.isMappedProject(d) ? d.project.id !== projectId : true
+        )
+        const highlightSelection = affectSelection.filter(
+            (d) => this.isMappedProject(d) && d.project.id === projectId
+        )
+
+        fadeOutSelection.transition().duration(200).attr('opacity', 0)
+        highlightSelection
+            .select('.branch-content-background')
             .transition()
             .duration(200)
-            .attr('opacity', hide ? 0 : 1)
+            .attr('opacity', 0.9)
+    }
+    public unfocusAllProjects() {
+        const affectSelection = this.svgRoot.selectAll(
+            'g.branch-content, #mainLine'
+        )
+        affectSelection.transition().duration(200).attr('opacity', 1)
+        affectSelection
+            .selectAll('.branch-content-background')
+            .transition()
+            .duration(200)
+            .attr('opacity', 0)
+    }
+
+    private isMappedProject(d: any): d is MappedProject {
+        return !!d && !!(d as MappedProject).project
     }
 }
