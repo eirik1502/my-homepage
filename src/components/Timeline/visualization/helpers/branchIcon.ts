@@ -28,14 +28,24 @@ export function appendBranchIcon(
 }
 
 export function updateBranchIcon(
-    branchGroup: d3.Selection<any, MappedProject, any, any>
+    branchGroup: d3.Selection<any, MappedProject, any, any>,
+    className: string
 ) {
+    const transitionDuration = 500
     branchGroup.select('defs').each(function (p) {
-        updateCircleImagePattern(d3.select(this), p.branchSize.h / 2)
+        updateCircleImagePattern(
+            d3
+                .select(this)
+                .transition()
+                .duration(transitionDuration * 0.85),
+            p.branchSize.h / 2
+        )
     })
 
     branchGroup
-        .select('circle')
+        .select(`circle.${className}`)
+        .transition()
+        .duration(transitionDuration)
         .attr('cx', (d) => d.branchSize.h / 2)
         .attr('cy', (d) => d.branchSize.h / 2)
         .attr('r', (d) => d.branchSize.h / 2)

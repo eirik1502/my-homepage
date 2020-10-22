@@ -16,15 +16,19 @@ export function appendCircleImagePattern(
     // updateCircleImagePattern(selection, radius)
 }
 
+type DefsSelection = d3.Selection<SVGDefsElement, any, d3.BaseType, any>
+type DefsSelectionOrTransition =
+    | DefsSelection
+    | d3.Transition<d3.BaseType, any, d3.BaseType, any>
+
 export function updateCircleImagePattern(
-    selection: d3.Selection<any, any, any, any>,
+    defsSelection: DefsSelectionOrTransition,
     radius: number
 ) {
-    const pattern = selection
+    const pattern = (defsSelection as DefsSelection)
         .select('pattern')
         .attr('width', radius * 2)
         .attr('height', radius * 2)
-    console.log(pattern.select('circle'))
     pattern
         .select('circle')
         .attr('width', radius * 2)

@@ -7,7 +7,7 @@ export default function (
     allBranches: d3.Selection<any, MappedProject, any, any>,
     availableSpace: AvailableSpace
 ) {
-    updateBranchIcon(allBranches)
+    updateBranchIcon(allBranches, 'branch-icon')
 
     const transitionBranchToPositionY = allBranches
         .transition('branch-move-to-position')
