@@ -1,11 +1,9 @@
-import React from 'react';
-import './App.css';
-import FrontPage from "./components/FrontPage";
+import React from 'react'
+import './App.css'
+import FrontPage from './components/FrontPage'
 
 function App() {
-  return (
-    <FrontPage />
-  );
+    return <FrontPage />
 }
 
-export default App;
+export default App

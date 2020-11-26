@@ -3,6 +3,8 @@ import styled from 'styled-components'
 import TopSection from './TopSection'
 import NavBar from './NavBar'
 import ProjectsSection from './ProjectsSection'
+import TriangleArea from './TriangleArea'
+import LandingSection from './LandingSection'
 
 const Wrapper = styled.div`
     width: 100vw;
@@ -20,10 +22,11 @@ const StyledNavBar = styled(NavBar)`
 
 export default () => (
     <Wrapper>
-        <StyledNavBar />
-        <TopSection />
-
-        <ProjectsSection />
+        {/*<StyledNavBar />*/}
+        <LandingSection />
+        {/*<TopSection />*/}
+        {/*<TriangleArea />*/}
+        {/*<ProjectsSection />*/}
         {/*<TimelineSection />*/}
         {/*<ProjectSection />*/}
     </Wrapper>
