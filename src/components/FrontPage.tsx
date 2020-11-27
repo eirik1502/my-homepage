@@ -5,6 +5,8 @@ import NavBar from './NavBar'
 import ProjectsSection from './ProjectsSection'
 import TriangleArea from './TriangleArea'
 import LandingSection from './LandingSection'
+import Timeline from './Timeline'
+import TimelineSection from './TimelineSection'
 
 const Wrapper = styled.div`
     width: 100vw;
@@ -27,7 +29,7 @@ export default () => (
         {/*<TopSection />*/}
         {/*<TriangleArea />*/}
         {/*<ProjectsSection />*/}
-        {/*<TimelineSection />*/}
+        <TimelineSection />
         {/*<ProjectSection />*/}
     </Wrapper>
 )

@@ -54,8 +54,11 @@ const TriangleDisplayAnim = keyframes`
   from {
     transform: translateZ(-2000px) rotateX(80deg);
   }
-  80% {
-    transform: translateZ(-100px) rotateX(60deg);
+  50% {
+    transform: translateZ(-150px) rotateX(60deg);
+  }
+  85% {
+    transform: translateZ(-100px) rotateX(40deg);
   }
   to {
     transform: rotateX(0);
