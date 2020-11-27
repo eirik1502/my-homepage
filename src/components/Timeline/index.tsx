@@ -9,39 +9,36 @@ type Props = {
 
 export default ({ timeline }: Props) => {
     const rootNodeRef = useRef<HTMLDivElement>(null)
-    const visRef = useRef<Visualization>(null)
+    const [visRef, setVisRef] = useState<Visualization | null>(null)
     const [prevBackgroundUrl, setPrevBackgroundUrl] = useState<
         string | undefined
     >(undefined)
     const [focusProject, setFocusProject] = useState<Project | null>(null)
 
     useEffect(() => {
-        if (visRef.current) {
-            visRef.current.update(timeline)
+        if (visRef) {
+            visRef.update(timeline)
         }
     }, [visRef, timeline])
 
     useEffect(() => {
-        if (!visRef.current && rootNodeRef.current) {
-            // @ts-ignore
-            visRef.current = new Visualization(rootNodeRef.current)
-        }
-    }, [rootNodeRef, visRef])
-
-    useEffect(() => {
-        if (visRef.current) {
-            visRef.current.onBranchMouseover = setFocusProject
-            visRef.current.onBranchMouseout = () => setFocusProject(null)
+        if (visRef) {
+            return () => setVisRef(null)
+        } else if (!visRef && rootNodeRef.current) {
+            const visualization = new Visualization(rootNodeRef.current)
+            visualization.onBranchMouseover = setFocusProject
+            visualization.onBranchMouseout = () => setFocusProject(null)
+            setVisRef(visualization)
         }
     }, [visRef])
 
     useEffect(() => {
-        if (visRef.current) {
+        if (visRef) {
             if (focusProject) {
                 setPrevBackgroundUrl(focusProject.backgroundUrl)
-                visRef.current.focusSingleProject(focusProject.id)
+                visRef.focusSingleProject(focusProject.id)
             } else {
-                visRef.current.unfocusAllProjects()
+                visRef.unfocusAllProjects()
             }
         }
     }, [visRef, focusProject])

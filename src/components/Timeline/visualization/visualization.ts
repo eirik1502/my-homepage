@@ -37,8 +37,6 @@ export class Visualization {
     width = () => this.rootNode.clientWidth
     height = () => this.rootNode.clientHeight
 
-    private handleResize() {}
-
     public update(timeline: TimelineType) {
         const sortedProjects = [...timeline].sort((a, b) =>
             a.timestamp < b.timestamp ? -1 : 1
